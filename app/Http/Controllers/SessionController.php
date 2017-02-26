@@ -8,7 +8,13 @@ use App\Http\Requests;
 use App\Http\Controllers\Controller;
 
 class SessionController extends Controller
-{
+{	
+	public function __construct(){
+		$this->middleware('guest',[
+			'only'=>['guest']
+		]);
+
+	}
     //
     public function create(){
     	return view('session.create');
@@ -29,7 +35,7 @@ class SessionController extends Controller
     	if (Auth::attempt($credentials,$request->has('remember'))) {
     		# code...通过认证
     		session()->flash('success','欢迎回来');
-    		return redirect()->route('users.show',[Auth::user()]);
+    		return redirect()->intended(route('users.show',[Auth::user()]));
     	}else{
     		session()->flash('danger','邮箱或密码错误');
     		return redirect()->back();
