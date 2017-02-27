@@ -8,7 +8,7 @@ use App\Http\Requests;
 use App\Http\Controllers\Controller;
 
 use App\Models\User;
-
+use Mail;
 class UsersController extends Controller
 {	
 
@@ -48,11 +48,38 @@ class UsersController extends Controller
     		'password'=>$request->bcrypt(password)
     	]);
 
+    	$this->sendEmailConfirmationTo($user);
+    	session()->flash('warning','邮件已发送到邮箱');
+    	return redirect('/');
+    	/*
     	Auth::login($user);
     	session()->flash('success','欢迎开启一段新的旅程');
     	return redirect()->route('users.show',[$user]);
+    	*/
     }
 
+    protected function sendEmailConfirmationTo($user){
+    	$view = 'emails.confirm';
+    	$data = compact('user');
+    	$from = "aufree@estgroupe.com";
+    	$name = 'Aufree';
+    	$to = $user->email;
+    	$subject = "感谢注册aufree应用，请确定邮箱";
+    	Mail::send($view,$data,function($message) use ($from,$name,$to,$subject){
+    		$message->from($from,$name)->to($to)->subject($subject);
+    	})
+
+    }
+
+    public function confirmEmail($token){
+    	$user = User::where('activation_token',$token)->firstOrFail();
+    	$user->activated = true;
+    	$user->activation_token = null;
+    	$user->save();
+    	Auth::login($user);
+    	session()->flash('success','恭喜注册成功');
+    	return redirect()->route('users.show',[$user]);
+    }
 
     public function edit($id){
     	$user = User::findOrFail($id);
